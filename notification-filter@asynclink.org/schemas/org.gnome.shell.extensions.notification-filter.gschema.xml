@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.notification-filter" path="/org/gnome/shell/extensions/notification-filter/">
+    <key type="aa{ss}" name="filters">
+      <default>[{'title': '', 'body': '', 'title_regex': 'false', 'body_regex': 'false'}]</default>
+      <summary>List of filters to ignore notifications.</summary>
+      <description>Each array value should be formatted as a dictionary with the following keys: title, body, title_regex, body_regex. The value of each key should be a string, and title_regex and body_regex should only contain the values 'true' or 'false'.</description>
+    </key>
+  </schema>
+</schemalist>
