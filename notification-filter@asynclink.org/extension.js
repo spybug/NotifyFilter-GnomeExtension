@@ -7,17 +7,13 @@ const NotificationDestroyedReason =
   imports.ui.messageTray.NotificationDestroyedReason;
 const Main = imports.ui.main;
 const common = Me.imports.common;
-
 const settings = ExtensionUtils.getSettings(
   'org.gnome.shell.extensions.notification-filter'
 );
-let settingsConnectId;
-
-let extension;
-let customUpdateState = null;
 
 // List of FilterSetting objects.
 let filterSettings = [];
+let settingsConnectId;
 
 /**
  * Reads settings to load in user preferences for notifications to filter out.
@@ -28,59 +24,56 @@ function readSettings() {
   filterSettings = common.getFiltersFromSettings(settings);
 }
 
-function init() {
-  // This function will be called each time _updateState is called from MessageTray.
-  customUpdateState = function () {
-    let changed = false;
+let customUpdateState = function() {
+  let changed = false;
 
-    // Filter out notificiation queue based on settings.
-    this._notificationQueue = this._notificationQueue.filter((notification) => {
-      //.source, .title, .urgency, .bannerBodyText
+  // Filter out notificiation queue based on settings.
+  this._notificationQueue = this._notificationQueue.filter((notification) => {
+    const notificationTitle = notification.title;
+    const notificationBody = notification.bannerBodyText;
+    let filterNotification = false;
 
-      const notificationTitle = notification.title;
-      const notificationBody = notification.bannerBodyText;
-      let filterNotification = false;
-
-      // Loop through user specified FilterSettings to see if notification matches any.
-      for (const filter of filterSettings) {
-        try {
-          if (filter.title && filter.body) {
-            if (testMatch(notificationTitle, filter.title, filter.title_regex) 
-                && testMatch(notificationBody, filter.body, filter.body_regex)) {
-              filterNotification = true;
-              break;
-            }
-          } else if (filter.body && testMatch(notificationBody, filter.body, filter.body_regex)) {
-            filterNotification = true;
-            break;
-          } else if (filter.title && testMatch(notificationTitle, filter.title, filter.title_regex)) {
+    // Loop through user specified FilterSettings to see if notification matches any.
+    for (const filter of filterSettings) {
+      try {
+        if (filter.title && filter.body) {
+          if (testMatch(notificationTitle, filter.title, filter.title_regex) 
+              && testMatch(notificationBody, filter.body, filter.body_regex)) {
             filterNotification = true;
             break;
           }
-        } catch (ex) {
-          logError(ex, 'Error while using filters');
+        } else if (filter.body && testMatch(notificationBody, filter.body, filter.body_regex)) {
+          filterNotification = true;
+          break;
+        } else if (filter.title && testMatch(notificationTitle, filter.title, filter.title_regex)) {
+          filterNotification = true;
+          break;
         }
+      } catch (ex) {
+        logError(ex, 'Error while applying notification filter');
       }
-
-      // Return false to filter out (skip) this notification.
-      if (filterNotification) {
-        notification.destroy(NotificationDestroyedReason.DISMISSED);
-        log('Filtered a notification with Title Text:\n\'' + notificationTitle + '\'\nand Body Text:\n\'' + notificationBody + '\'');
-        changed = true;
-        return false;
-      } else {
-        return true;
-      }
-    });
-
-    if (changed) {
-      this.emit('queue-changed');
     }
 
-    // Calls the original _updateState, to handle showing the notifications. */
-    this._updateStateOriginal();
-  };
+    // Return false to filter out (skip) this notification.
+    if (filterNotification) {
+      notification.destroy(NotificationDestroyedReason.DISMISSED);
+      // log('Filtered a notification with Title Text:\n\'' + notificationTitle + '\'\nand Body Text:\n\'' + notificationBody + '\'');
+      changed = true;
+      return false;
+    } else {
+      return true;
+    }
+  });
+
+  if (changed) {
+    this.emit('queue-changed');
+  }
+
+  // Calls the original _updateState, to handle showing the notifications.
+  this._updateStateOriginal();
 }
+
+
 
 /**
  * Returns whether the given stringToTest contains the filter. If use_regex is true than a Regular Expression is used for the match.
@@ -93,6 +86,8 @@ function testMatch(stringToTest, filter, use_regex = false) {
   return stringToTest.includes(filter);
 }
 
+function init() {}
+
 function enable() {
   readSettings();
   settingsConnectId = settings.connect('changed', () => {
@@ -100,7 +95,7 @@ function enable() {
   });
 
   /**
-   * Change _updateState()
+   * Change _updateState() function.
    */
   MessageTray.MessageTray.prototype._updateStateOriginal =
     MessageTray.MessageTray.prototype._updateState;
