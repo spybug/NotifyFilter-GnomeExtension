@@ -1,5 +1,5 @@
 {
-  "description": "Filter out notifications by their title or text content, to prevent receiving unneeded notifications.",
+  "description": "Filter out notifications by their text content to block them from appearing.",
   "name": "Notification Filter",
   "settings-schema": "org.gnome.shell.extensions.notification-filter",
   "shell-version": [
@@ -7,7 +7,7 @@
     "41",
     "42"
   ],
-  "url": "https://github.com/",
+  "url": "https://github.com/spybug/NotifyFilter-GnomeExtension",
   "uuid": "notification-filter@asynclink.org",
   "version": 1
 }
