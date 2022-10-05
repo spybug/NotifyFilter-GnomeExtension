@@ -7,12 +7,9 @@ const NotificationDestroyedReason =
   imports.ui.messageTray.NotificationDestroyedReason;
 const Main = imports.ui.main;
 const common = Me.imports.common;
-const settings = ExtensionUtils.getSettings(
-  'org.gnome.shell.extensions.notification-filter'
-);
 
-// List of FilterSetting objects.
-let filterSettings = [];
+let filterSettings;
+let settings;
 let settingsConnectId;
 
 /**
@@ -21,7 +18,9 @@ let settingsConnectId;
  * @method readSettings
  */
 function readSettings() {
-  filterSettings = common.getFiltersFromSettings(settings);
+  if (settings) {
+    filterSettings = common.getFiltersFromSettings(settings);
+  }
 }
 
 let customUpdateState = function() {
@@ -89,14 +88,16 @@ function testMatch(stringToTest, filter, use_regex = false) {
 function init() {}
 
 function enable() {
-  readSettings();
+  filterSettings = [];
+  settings = ExtensionUtils.getSettings(
+    'org.gnome.shell.extensions.notification-filter'
+  );
   settingsConnectId = settings.connect('changed', () => {
     readSettings();
   });
+  readSettings();
 
-  /**
-   * Change _updateState() function.
-   */
+  // Override the _updateState() function in MessageTray.
   MessageTray.MessageTray.prototype._updateStateOriginal =
     MessageTray.MessageTray.prototype._updateState;
   MessageTray.MessageTray.prototype._updateState = customUpdateState;
@@ -104,16 +105,18 @@ function enable() {
 
 /**
  * This function could be called after the extension is uninstalled,
- * disabled GNOME Tweaks, when you log out or when the screen locks.
+ * disabled GNOME Tweaks, when you log out, or when the screen locks.
  *
  * @method disable
  */
 function disable() {
   settings.disconnect(settingsConnectId);
+  settings = null;
+  filterSettings = null;
+  settingsConnectId = null;
 
-  /**
-   * Revert to original updateState function.
-   */
+  
+  // Revert to original updateState function.
   MessageTray.MessageTray.prototype._updateState =
     MessageTray.MessageTray.prototype._updateStateOriginal;
   delete MessageTray.MessageTray.prototype._updateStateOriginal;

@@ -5,27 +5,27 @@ const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
-const settings = ExtensionUtils.getSettings(
-  'org.gnome.shell.extensions.notification-filter'
-);
 const SettingsEditor = Me.imports.settingsInterface.SettingsEditor;
 const FilterSetting = Me.imports.common.FilterSetting;
 const common = Me.imports.common;
 
-let savedSettings;
 
-function init() {
-  // css for all widgets
-  readCss();
-
-  // get preferences from gsettings
-  savedSettings = common.getFiltersFromSettings(settings);
-}
+function init() {}
 
 /**
  * Called when the preferences window is first created to build and return a Gtk widget.
  */
 function buildPrefsWidget() {
+  // css for all widgets
+  readCss();
+
+  // get preferences from gsettings
+  const settings = ExtensionUtils.getSettings(
+    'org.gnome.shell.extensions.notification-filter'
+  );
+  const savedSettings = common.getFiltersFromSettings(settings);
+
+  // Create the editor UI
   const editor = new SettingsEditor(savedSettings);
   editor.create();
   return editor.getWidget();
