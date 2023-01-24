@@ -1,7 +1,8 @@
 # NotifyFilter-GnomeExtension
 
-Gnome extenstion to allow users to filter out notifications based on their text content.
+Gnome extension to allow users to filter out notifications based on their text content.
 
+[Install it here!](https://extensions.gnome.org/extension/5380/notification-filter/)
 
 ### Pack Extension
 
