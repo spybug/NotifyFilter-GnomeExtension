@@ -1,16 +1,15 @@
 'use strict';
 
-const Gtk = imports.gi.Gtk;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const ExtensionUtils = imports.misc.extensionUtils;
-const settings = ExtensionUtils.getSettings(
-  'org.gnome.shell.extensions.notification-filter'
-);
-const Me = ExtensionUtils.getCurrentExtension();
-const FilterSettingComponent = Me.imports.common.FilterSettingComponent;
+import Gio from 'gi://Gio';
+import Gtk from 'gi://Gtk';
+
+//import * as common from './common.js';
+import {FilterSettingComponent} from './common.js';
+
+//const FilterSettingComponent = common.FilterSettingComponent;
 const MAX_FILTERS = 100;
 
+var settings;
 var filterRows = [];
 var filtersParentBox;
 var addButton;
@@ -20,15 +19,18 @@ var addButton;
  * A panel of widgets to specify the settings for filters to apply.
  *
  * @param {FilterSetting[]} savedSettings
+ * @param {Settings[]} extenionSettings
  */
-var SettingsEditor = class SettingsEditor {
+export class SettingsEditor {
   /**
    * Constructor.
    *
    * @param {FilterSetting[]} savedSettings
+   * @param {Settings[]} extenionSettings
    */
-  constructor(savedSettings) {
+  constructor(savedSettings, extensionSettings) {
     this.savedSettings = savedSettings;
+    settings = extensionSettings;
     filterRows = [];
   }
 
@@ -106,6 +108,7 @@ var SettingsEditor = class SettingsEditor {
   getWidget() {
     return this.mainBox;
   }
+
 };
 
 /**
@@ -114,7 +117,7 @@ var SettingsEditor = class SettingsEditor {
  *
  * @param {FilterSettingComponent} filterRow
  */
-var removeFilterRow = function (filterRow) {
+const removeFilterRow = function(filterRow) {
   for (let i = 0; i < filterRows.length; i++) {
     if (filterRows[i].getId() === filterRow.getId()) {
       // remove from js array
@@ -122,18 +125,18 @@ var removeFilterRow = function (filterRow) {
       // remove widget
       filtersParentBox.remove(filterRow.getGrid());
       if (filterRows.length <= MAX_FILTERS) {
-        addButton.set_label('Add new filter');
+      addButton.set_label('Add new filter');
       }
       break;
     }
+  this.save();
   }
-  save();
 };
 
 /**
  * Save the settings from all the filter rows in the UI.
  */
-var save = function () {
+const save = function() {
   const settingsToSave = [];
   for (let i = 0; i < filterRows.length; i++) {
     const setting = filterRows[i].getSetting();
@@ -148,5 +151,5 @@ var save = function () {
   } else {
     settings.set_value('filters', new GLib.Variant('aa{ss}', settingsToSave));
     Gio.Settings.sync();
-  }
-};
+  };
+}

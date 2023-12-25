@@ -1,16 +1,14 @@
 'use strict';
 
-const Gtk = imports.gi.Gtk;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+import Gtk from 'gi://Gtk';
 
 /**
  * Read and parse preferences from GSettings.
- * 
+ *
  * @param settings for extension
  * @returns a list of FilterSetting objects
  */
-function getFiltersFromSettings(settings) {
+export function getFiltersFromSettings(settings) {
   const unpackedSettings = settings.get_value('filters').deep_unpack();
   const loadedSettings = [];
   for (let i = 0; i < unpackedSettings.length; i++) {
@@ -26,10 +24,10 @@ function getFiltersFromSettings(settings) {
 
 /**
  * Structure for a Filter object.
- * 
- * @param {String} title 
- * @param {String} body 
- * @param {boolean} title_regex 
+ *
+ * @param {String} title
+ * @param {String} body
+ * @param {boolean} title_regex
  * @param {boolean} body_regex
  */
 var FilterSetting = class FilterSetting {
@@ -43,22 +41,22 @@ var FilterSetting = class FilterSetting {
 
 /**
  * A `Gtk.Grid` displaying the controls to create a `FilterSetting`.
- * 
- * @param {Widget} parent 
- * @param {Function} removeCallback 
+ *
+ * @param {Widget} parent
+ * @param {Function} removeCallback
  * @param {Function} saveCallback
  */
- var FilterSettingComponent = class FilterSettingComponent {
+export var FilterSettingComponent = class FilterSettingComponent {
 
   /**
    * Constructor with savedSetting initialized.
-   * 
-   * @param {Widget} parent 
+   *
+   * @param {Widget} parent
    * @param {Function} removeCallback
    * @param {Function} saveCallback
    * @param {Function} savedSetting
    */
-   constructor(parent, removeCallback, saveCallback, savedSetting=undefined) {    
+   constructor(parent, removeCallback, saveCallback, savedSetting=undefined) {
     this.parent = parent;
     this.removeCallback = removeCallback;
     this.saveCallback = saveCallback;
@@ -112,7 +110,7 @@ var FilterSetting = class FilterSetting {
     });
 
     // ===========================
-    //     Title Regex Checkbox 
+    //     Title Regex Checkbox
     // ===========================
     this.titleRegexButton = Gtk.CheckButton.new_with_label('Use regex');
     this.titleRegexButton.tooltip_text = 'Use regular expression matching for the title';
@@ -150,7 +148,7 @@ var FilterSetting = class FilterSetting {
     });
 
     // ===========================
-    //     Body Regex Checkbox 
+    //     Body Regex Checkbox
     // ===========================
     this.bodyRegexButton = Gtk.CheckButton.new_with_label('Use regex');
     this.bodyRegexButton.tooltip_text = 'Use regular expression matching for the body';
@@ -195,7 +193,7 @@ var FilterSetting = class FilterSetting {
 
   /**
    * Get the root widget.
-   * 
+   *
    * @returns Gtk.Grid
    */
   getGrid() {
@@ -204,7 +202,7 @@ var FilterSetting = class FilterSetting {
 
   /**
    * Get the settings specified in this panel's controls.
-   * 
+   *
    * @returns FilterSetting
    */
   getSetting() {
@@ -213,8 +211,8 @@ var FilterSetting = class FilterSetting {
 
   /**
    * Set a `FilterSetting` for use in initializing controls.
-   * 
-   * @param {FilterSetting} savedSetting 
+   *
+   * @param {FilterSetting} savedSetting
    */
   setSetting(savedSetting) {
       this.savedSetting = savedSetting;
