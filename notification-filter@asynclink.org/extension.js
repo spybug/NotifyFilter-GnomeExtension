@@ -1,55 +1,63 @@
 'use strict';
 
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
-//import {NotificationDestroyedReason} from 'resource:///org/gnome/shell/ui/messageTray.js';
-import * as common from './common.js';
+import * as Common from './common.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-let filterSettings;
-let settings;
-let settingsConnectId;
+// The filter rules need to be available in the global scope.
+var filterSettings;
 
 export default class NotificationFilter extends Extension {
-    enable() {
-        filterSettings = [];
-        settings = Extension.lookupByURL(import.meta.url).getSettings();
-        settingsConnectId = settings.connect('changed', () => {
-        readSettings();
-        });
-        readSettings();
+  // Setup variables.
+  settings = null;
+  settingsConnectId = null;
 
-        // Override the _updateState() function in MessageTray.
-        MessageTray.MessageTray.prototype._updateStateOriginal =
-        MessageTray.MessageTray.prototype._updateState;
-        MessageTray.MessageTray.prototype._updateState = customUpdateState;
+  /**
+   * Function run when the extension is enabled.
+   */
+  enable() {
+    // Flush the current settings and then load them.
+    filterSettings = [];
+    this.settings = Extension.lookupByURL(import.meta.url).getSettings();
+    this.settingsConnectId = this.settings.connect('changed', () => { this.readSettings(); });
+    this.readSettings();
+
+    // Override the _updateState() function in MessageTray.
+    MessageTray.MessageTray.prototype._updateStateOriginal =
+      MessageTray.MessageTray.prototype._updateState;
+    MessageTray.MessageTray.prototype._updateState = customUpdateState;
+  }
+
+  /**
+   * Function that is run when the extension is disabled.
+   */
+  disable() {
+    // Flush out variables.
+    this.settings.disconnect(this.settingsConnectId);
+    this.settings = null;
+    this.settingsConnectId = null;
+    filterSettings = null;
+
+    // Revert to original updateState function.
+    MessageTray.MessageTray.prototype._updateState =
+      MessageTray.MessageTray.prototype._updateStateOriginal;
+    delete MessageTray.MessageTray.prototype._updateStateOriginal;
+  }
+
+  /**
+   * Reads settings to load in user preferences for notifications to filter out.
+   */
+  readSettings() {
+    if (this.settings) {
+      filterSettings = Common.getFiltersFromSettings(this.settings);
     }
-
-    disable() {
-      settings.disconnect(settingsConnectId);
-      settings = null;
-      filterSettings = null;
-      settingsConnectId = null;
-
-
-      // Revert to original updateState function.
-      MessageTray.MessageTray.prototype._updateState =
-        MessageTray.MessageTray.prototype._updateStateOriginal;
-      delete MessageTray.MessageTray.prototype._updateStateOriginal;
-    }
-}
-
-/**
- * Reads settings to load in user preferences for notifications to filter out.
- *
- * @method readSettings
- */
-function readSettings() {
-  if (settings) {
-    filterSettings = common.getFiltersFromSettings(settings);
   }
 }
-
+/**
+ * The custom update function to check to see if the current notificaiton should be filtered or not.
+ */
 let customUpdateState = function() {
+  // Setup variables.
   let changed = false;
 
   // Filter out notification queue based on settings.
@@ -103,6 +111,7 @@ let customUpdateState = function() {
  * Returns whether the given stringToTest contains the filter. If use_regex is true than a Regular Expression is used for the match.
  */
 function testMatch(stringToTest, filter, use_regex = false) {
+  // Check to see if regex support is enabled, and if so use it.
   if (use_regex) {
     const regex = new RegExp(filter);
     return regex.test(stringToTest);
