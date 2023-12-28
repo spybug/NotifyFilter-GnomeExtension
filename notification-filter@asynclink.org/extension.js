@@ -90,7 +90,6 @@ let customUpdateState = function() {
     // Return false to filter out (skip) this notification.
     if (filterNotification) {
       notification.destroy(MessageTray.NotificationDestroyedReason.DISMISSED);
-      //notification.destroy(NotificationDestroyedReason.DISMISSED);
       // log('Filtered a notification with Title Text:\n\'' + notificationTitle + '\'\nand Body Text:\n\'' + notificationBody + '\'');
       changed = true;
       return false;

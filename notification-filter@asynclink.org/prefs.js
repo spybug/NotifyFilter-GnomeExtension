@@ -3,7 +3,7 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import * as Common from './common.js';
 
 export default class NotificaitonFilterPreferences extends ExtensionPreferences {
@@ -28,28 +28,28 @@ export default class NotificaitonFilterPreferences extends ExtensionPreferences 
     // Loop through and create all the widgets.
     for (var i = 0; i < Common.MAX_FILTERS; i++) {
       // Add group header.
-      this.groups[i] = new Adw.PreferencesGroup({ title:'Filter Rule ' + (i + 1) });
+      this.groups[i] = new Adw.PreferencesGroup({ title:_('Filter Rule') + ' ' + (i + 1) });
 
       // Add title regex switch.
-      this.titleRegexSwitchRows[i] = new Adw.SwitchRow( { title: 'Use regex to match title' });
+      this.titleRegexSwitchRows[i] = new Adw.SwitchRow( { title: _('Use regex to match title') });
       this.titleRegexSwitchRows[i].set_active(filters[i].title_regex);
       this.titleRegexSwitchRows[i].connect('notify::active', (object, _pspec) => { this._settingsChanged(); });
       this.groups[i].add(this.titleRegexSwitchRows[i]);
 
       // Add title match string.
-      this.titleMatchEntryRows[i] = new Adw.EntryRow( { title: 'Title text to match' });
+      this.titleMatchEntryRows[i] = new Adw.EntryRow( { title: _('Title text to match') });
       if(filters[i].title.toString().length > 0) { this.titleMatchEntryRows[i].set_text(filters[i].title.toString()); }
       this.titleMatchEntryRows[i].connect('notify::active', (object, _pspec) => { this._settingsChanged(); });
       this.groups[i].add(this.titleMatchEntryRows[i]);
 
       // Add body regex switch.
-      this.bodyRegexSwitchRows[i] = new Adw.SwitchRow( { title: 'Use regex to match body' });
+      this.bodyRegexSwitchRows[i] = new Adw.SwitchRow( { title: _('Use regex to match body') });
       this.bodyRegexSwitchRows[i].set_active(filters[i].body_regex);
       this.bodyRegexSwitchRows[i].connect('notify::active', (object, _pspec) => { this._settingsChanged(); });
       this.groups[i].add(this.bodyRegexSwitchRows[i]);
 
       // Add body match string.
-      this.bodyMatchEntryRows[i] = new Adw.EntryRow( { title: 'Body text to match' });
+      this.bodyMatchEntryRows[i] = new Adw.EntryRow( { title: _('Body text to match') });
       if(filters[i].body.toString().length > 0) { this.bodyMatchEntryRows[i].set_text(filters[i].body.toString()); }
       this.bodyMatchEntryRows[i].connect('notify::active', (object, _pspec) => { this._settingsChanged(); });
       this.groups[i].add(this.bodyMatchEntryRows[i]);
