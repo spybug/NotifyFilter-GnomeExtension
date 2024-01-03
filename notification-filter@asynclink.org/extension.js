@@ -1,32 +1,66 @@
 'use strict';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const MessageTray = imports.ui.messageTray;
-const NotificationDestroyedReason =
-  imports.ui.messageTray.NotificationDestroyedReason;
-const Main = imports.ui.main;
-const common = Me.imports.common;
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as Common from './common.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-let filterSettings;
-let settings;
-let settingsConnectId;
+// The filter rules need to be available in the global scope.
+var filterSettings;
 
-/**
- * Reads settings to load in user preferences for notifications to filter out.
- *
- * @method readSettings
- */
-function readSettings() {
-  if (settings) {
-    filterSettings = common.getFiltersFromSettings(settings);
+export default class NotificationFilter extends Extension {
+  // Setup variables.
+  settings = null;
+  settingsConnectId = null;
+
+  /**
+   * Function run when the extension is enabled.
+   */
+  enable() {
+    // Flush the current settings and then load them.
+    filterSettings = [];
+    this.settings = Extension.lookupByURL(import.meta.url).getSettings();
+    this.settingsConnectId = this.settings.connect('changed', () => { this.readSettings(); });
+    this.readSettings();
+
+    // Override the _updateState() function in MessageTray.
+    MessageTray.MessageTray.prototype._updateStateOriginal =
+      MessageTray.MessageTray.prototype._updateState;
+    MessageTray.MessageTray.prototype._updateState = customUpdateState;
+  }
+
+  /**
+   * Function that is run when the extension is disabled.
+   */
+  disable() {
+    // Flush out variables.
+    this.settings.disconnect(this.settingsConnectId);
+    this.settings = null;
+    this.settingsConnectId = null;
+    filterSettings = null;
+
+    // Revert to original updateState function.
+    MessageTray.MessageTray.prototype._updateState =
+      MessageTray.MessageTray.prototype._updateStateOriginal;
+    delete MessageTray.MessageTray.prototype._updateStateOriginal;
+  }
+
+  /**
+   * Reads settings to load in user preferences for notifications to filter out.
+   */
+  readSettings() {
+    if (this.settings) {
+      filterSettings = Common.getFiltersFromSettings(this.settings);
+    }
   }
 }
-
+/**
+ * The custom update function to check to see if the current notificaiton should be filtered or not.
+ */
 let customUpdateState = function() {
+  // Setup variables.
   let changed = false;
 
-  // Filter out notificiation queue based on settings.
+  // Filter out notification queue based on settings.
   this._notificationQueue = this._notificationQueue.filter((notification) => {
     const notificationTitle = notification.title;
     const notificationBody = notification.bannerBodyText;
@@ -36,7 +70,7 @@ let customUpdateState = function() {
     for (const filter of filterSettings) {
       try {
         if (filter.title && filter.body) {
-          if (testMatch(notificationTitle, filter.title, filter.title_regex) 
+          if (testMatch(notificationTitle, filter.title, filter.title_regex)
               && testMatch(notificationBody, filter.body, filter.body_regex)) {
             filterNotification = true;
             break;
@@ -55,7 +89,7 @@ let customUpdateState = function() {
 
     // Return false to filter out (skip) this notification.
     if (filterNotification) {
-      notification.destroy(NotificationDestroyedReason.DISMISSED);
+      notification.destroy(MessageTray.NotificationDestroyedReason.DISMISSED);
       // log('Filtered a notification with Title Text:\n\'' + notificationTitle + '\'\nand Body Text:\n\'' + notificationBody + '\'');
       changed = true;
       return false;
@@ -72,52 +106,14 @@ let customUpdateState = function() {
   this._updateStateOriginal();
 }
 
-
-
 /**
  * Returns whether the given stringToTest contains the filter. If use_regex is true than a Regular Expression is used for the match.
  */
 function testMatch(stringToTest, filter, use_regex = false) {
+  // Check to see if regex support is enabled, and if so use it.
   if (use_regex) {
     const regex = new RegExp(filter);
     return regex.test(stringToTest);
   }
   return stringToTest.includes(filter);
-}
-
-function init() {}
-
-function enable() {
-  filterSettings = [];
-  settings = ExtensionUtils.getSettings(
-    'org.gnome.shell.extensions.notification-filter'
-  );
-  settingsConnectId = settings.connect('changed', () => {
-    readSettings();
-  });
-  readSettings();
-
-  // Override the _updateState() function in MessageTray.
-  MessageTray.MessageTray.prototype._updateStateOriginal =
-    MessageTray.MessageTray.prototype._updateState;
-  MessageTray.MessageTray.prototype._updateState = customUpdateState;
-}
-
-/**
- * This function could be called after the extension is uninstalled,
- * disabled GNOME Tweaks, when you log out, or when the screen locks.
- *
- * @method disable
- */
-function disable() {
-  settings.disconnect(settingsConnectId);
-  settings = null;
-  filterSettings = null;
-  settingsConnectId = null;
-
-  
-  // Revert to original updateState function.
-  MessageTray.MessageTray.prototype._updateState =
-    MessageTray.MessageTray.prototype._updateStateOriginal;
-  delete MessageTray.MessageTray.prototype._updateStateOriginal;
 }
