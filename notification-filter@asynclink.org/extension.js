@@ -18,7 +18,7 @@ export default class NotificationFilter extends Extension {
   enable() {
     // Flush the current settings and then load them.
     filterSettings = [];
-    this.settings = Extension.lookupByURL(import.meta.url).getSettings();
+    this.settings = this.getSettings();
     this.settingsConnectId = this.settings.connect('changed', () => { this.readSettings(); });
     this.readSettings();
 
