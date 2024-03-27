@@ -3,7 +3,8 @@
   "name": "Notification Filter",
   "settings-schema": "org.gnome.shell.extensions.notification-filter",
   "shell-version": [
-    "45"
+    "45",
+    "46"
   ],
   "url": "https://github.com/spybug/NotifyFilter-GnomeExtension",
   "uuid": "notification-filter@asynclink.org",
