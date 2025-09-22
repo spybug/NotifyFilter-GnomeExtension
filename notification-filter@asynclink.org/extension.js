@@ -63,7 +63,17 @@ let customUpdateState = function() {
   // Filter out notification queue based on settings.
   this._notificationQueue = this._notificationQueue.filter((notification) => {
     const notificationTitle = notification.title;
-    const notificationBody = notification.bannerBodyText;
+
+    // At some point Gnome changed the body text property from "bannerBodyText" to just "body"
+    // (probably Gnome 46?), so let's check to see if the old property exists, if it does use it,
+    // otherwise use the new one.
+    let notificationBody = '';
+    if( notification.bannerBodyText !== undefined ) {
+      notificationBody = notification.bannerBodyText;
+    } else {
+      notificationBody = notification.body;
+    }
+
     let filterNotification = false;
 
     // Loop through user specified FilterSettings to see if notification matches any.
@@ -110,10 +120,14 @@ let customUpdateState = function() {
  * Returns whether the given stringToTest contains the filter. If use_regex is true than a Regular Expression is used for the match.
  */
 function testMatch(stringToTest, filter, use_regex = false) {
-  // Check to see if regex support is enabled, and if so use it.
-  if (use_regex) {
-    const regex = new RegExp(filter);
-    return regex.test(stringToTest);
+  if( typeof stringToTest == 'string' || stringToTest instanceof String ) {
+    // Check to see if regex support is enabled, and if so use it.
+    if (use_regex) {
+      const regex = new RegExp(filter);
+      return regex.test(stringToTest);
+    }
+    return stringToTest.includes(filter);
+  } else {
+    return false;
   }
-  return stringToTest.includes(filter);
 }
